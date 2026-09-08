@@ -1,0 +1,72 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model Doctor {
+  id             Int           @id @default(autoincrement())
+  name           String
+  specialization String
+  language       String?
+  schedules      Schedule[]
+  appointments   Appointment[]
+}
+
+model Schedule {
+  id        Int      @id @default(autoincrement())
+  doctorId  Int
+  date      DateTime
+  startTime String
+  endTime   String
+  doctor    Doctor   @relation(fields: [doctorId], references: [id])
+}
+
+model Patient {
+  id           Int           @id @default(autoincrement())
+  name         String
+  phone        String
+  language     String
+  appointments Appointment[]
+  conversations Conversation[]
+}
+
+model Appointment {
+  id        Int      @id @default(autoincrement())
+  patientId Int
+  doctorId  Int
+  date      DateTime
+  time      String
+  status    String   @default("CONFIRMED")
+  notes     String?
+
+  patient Patient @relation(fields: [patientId], references: [id])
+  doctor  Doctor  @relation(fields: [doctorId], references: [id])
+
+  @@unique([doctorId, date, time])
+}
+
+model Conversation {
+  id           Int      @id @default(autoincrement())
+  patientId    Int?
+  language     String
+  messages     Json
+  summary      String?
+  humanHandoff Boolean  @default(false)
+  status       String   @default("BOT")
+  createdAt    DateTime @default(now())
+
+  patient Patient? @relation(fields: [patientId], references: [id])
+}
+
